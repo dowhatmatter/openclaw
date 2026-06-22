@@ -1365,6 +1365,28 @@ describe("appendAssistantMessageToSessionTranscript", () => {
     }
   });
 
+  it("uses a reverse tail scan for modern parent-linked appends", async () => {
+    const sessionFile = resolveSessionTranscriptPathInDir(
+      "tail-scan-session",
+      fixture.sessionsDir(),
+    );
+    await appendSessionTranscriptMessage({
+      transcriptPath: sessionFile,
+      message: { role: "user", content: "root" },
+    });
+
+    const createReadStreamSpy = vi.spyOn(fs, "createReadStream");
+    try {
+      await appendSessionTranscriptMessage({
+        transcriptPath: sessionFile,
+        message: { role: "assistant", content: "reply" },
+      });
+      expect(createReadStreamSpy).not.toHaveBeenCalled();
+    } finally {
+      createReadStreamSpy.mockRestore();
+    }
+  });
+
   it("separates message and event appends from an unterminated transcript entry", async () => {
     const sessionFile = resolveSessionTranscriptPathInDir(sessionId, fixture.sessionsDir());
     fs.mkdirSync(path.dirname(sessionFile), { recursive: true });
