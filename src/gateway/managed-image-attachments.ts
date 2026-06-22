@@ -899,9 +899,10 @@ export async function createManagedOutgoingImageBlocks(params: {
                 if (params.localRoots !== "any") {
                   resolvedLocalRoots ??= await resolveLocalMediaRoots(params.localRoots);
                 }
-                await assertLocalMediaAllowed(localMediaPath, params.localRoots, {
-                  ...(resolvedLocalRoots ? { resolvedRoots: resolvedLocalRoots } : {}),
-                });
+                const localMediaOptions = resolvedLocalRoots
+                  ? { resolvedRoots: resolvedLocalRoots }
+                  : undefined;
+                await assertLocalMediaAllowed(localMediaPath, params.localRoots, localMediaOptions);
               }
               return await saveMediaSource(
                 mediaUrl,
