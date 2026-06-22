@@ -42,7 +42,62 @@ function normalizeOverrides(overrides) {
   if (!overrides || typeof overrides !== "object" || Array.isArray(overrides)) {
     return {};
   }
-  return normalizeOverrideValue(overrides);
+  return normalizePnpmSelectorOverrides(normalizeOverrideValue(overrides));
+}
+
+function assignOverrideValue(target, name, value) {
+  const current = target[name];
+  if (current === undefined) {
+    target[name] = value;
+    return;
+  }
+  if (isPlainObject(current) && isPlainObject(value)) {
+    for (const [nestedName, nestedValue] of Object.entries(value)) {
+      assignOverrideValue(current, nestedName, nestedValue);
+    }
+    return;
+  }
+  if (isPlainObject(current) && !isPlainObject(value)) {
+    current["."] = value;
+    return;
+  }
+  if (!isPlainObject(current) && isPlainObject(value)) {
+    target[name] = { ".": current, ...value };
+    return;
+  }
+  target[name] = value;
+}
+
+function assignPnpmSelectorOverride(target, selector, value) {
+  const parts = selector
+    .split(">")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length <= 1) {
+    assignOverrideValue(target, selector, value);
+    return;
+  }
+
+  let cursor = target;
+  for (const part of parts.slice(0, -1)) {
+    const current = cursor[part];
+    if (isPlainObject(current)) {
+      cursor = current;
+      continue;
+    }
+    const next = current === undefined ? {} : { ".": current };
+    cursor[part] = next;
+    cursor = next;
+  }
+  assignOverrideValue(cursor, parts[parts.length - 1], value);
+}
+
+function normalizePnpmSelectorOverrides(overrides) {
+  const normalized = {};
+  for (const [name, value] of Object.entries(overrides)) {
+    assignPnpmSelectorOverride(normalized, name, value);
+  }
+  return normalized;
 }
 
 function isPlainObject(value) {
@@ -304,6 +359,13 @@ function mergeOverrideEntry(merged, name, spec) {
     }
     return;
   }
+  if (typeof current === "string" && isPlainObject(spec) && spec["."] === undefined) {
+    merged[name] = { ".": current };
+    for (const [nestedName, nestedSpec] of Object.entries(spec)) {
+      mergeOverrideEntry(merged[name], nestedName, nestedSpec);
+    }
+    return;
+  }
   if (
     typeof current === "string" &&
     isPlainObject(spec) &&
@@ -326,6 +388,10 @@ function mergeOverrideEntry(merged, name, spec) {
     exactOverrideVersionsMatch(current["."], spec)
   ) {
     current["."] = preferredExactOverrideRootSpec(current["."], spec);
+    return;
+  }
+  if (isPlainObject(current) && typeof spec === "string" && current["."] === undefined) {
+    current["."] = spec;
     return;
   }
   if (JSON.stringify(current) !== JSON.stringify(spec)) {
