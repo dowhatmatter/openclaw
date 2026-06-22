@@ -2745,6 +2745,7 @@ async function processOpenAICompletionsStream(
   const toolCallBlocksByIndex = new Map<number, ToolCallBlock>();
   const toolCallBlocksById = new Map<string, ToolCallBlock>();
   const toolCallBlockBytes = new WeakMap<ToolCallBlock, number>();
+  const toolCallBlockIndices = new WeakMap<ToolCallBlock, number>();
   let sawStopFinishReason = false;
   const blockIndex = () => output.content.length - 1;
   const measureUtf8Bytes = (text: string) => Buffer.byteLength(text, "utf8");
@@ -2877,14 +2878,15 @@ async function processOpenAICompletionsStream(
     };
     currentBlock = block;
     output.content.push(block);
+    toolCallBlockIndices.set(block, output.content.length - 1);
     pushStreamEvent({
       type: "toolcall_start",
-      contentIndex: output.content.indexOf(block),
+      contentIndex: toolCallBlockIndices.get(block) ?? -1,
       partial: output,
     });
     pushStreamEvent({
       type: "toolcall_delta",
-      contentIndex: output.content.indexOf(block),
+      contentIndex: toolCallBlockIndices.get(block) ?? -1,
       delta: toolCall.partialArgs,
       partial: output,
     });
@@ -3075,9 +3077,10 @@ async function processOpenAICompletionsStream(
             ...(initialSig ? { thoughtSignature: initialSig } : {}),
           };
           output.content.push(block);
+          toolCallBlockIndices.set(block, output.content.length - 1);
           pushStreamEvent({
             type: "toolcall_start",
-            contentIndex: output.content.indexOf(block),
+            contentIndex: toolCallBlockIndices.get(block) ?? -1,
             partial: output,
           });
         }
@@ -3107,7 +3110,7 @@ async function processOpenAICompletionsStream(
           block.arguments = parseStreamingJson(block.partialArgs);
           pushStreamEvent({
             type: "toolcall_delta",
-            contentIndex: output.content.indexOf(block),
+            contentIndex: toolCallBlockIndices.get(block) ?? -1,
             delta: toolCall.function.arguments,
             partial: output,
           });
