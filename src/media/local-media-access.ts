@@ -62,7 +62,11 @@ export async function resolveLocalMediaRoots(
 export async function assertLocalMediaAllowed(
   mediaPath: string,
   localRoots: readonly string[] | "any" | undefined,
-  options?: { inboundRoots?: readonly string[]; resolvedRoots?: readonly string[] },
+  options?: {
+    inboundRoots?: readonly string[];
+    resolvedRoots?: readonly string[];
+    resolveRoots?: () => Promise<readonly string[]>;
+  },
 ): Promise<void> {
   if (localRoots === "any") {
     return;
@@ -110,7 +114,10 @@ export async function assertLocalMediaAllowed(
     }
   }
 
-  const resolvedRoots = options?.resolvedRoots ?? (await resolveLocalMediaRoots(roots));
+  const resolvedRoots =
+    options?.resolvedRoots ??
+    (await options?.resolveRoots?.()) ??
+    (await resolveLocalMediaRoots(roots));
   for (const [index, resolvedRoot] of resolvedRoots.entries()) {
     const root = roots[index] ?? resolvedRoot;
     if (resolvedRoot === path.parse(resolvedRoot).root) {

@@ -868,7 +868,7 @@ export async function createManagedOutgoingImageBlocks(params: {
   const stateDir = params.stateDir ?? resolveStateDir();
   const limits = resolveManagedImageAttachmentLimits(params.limits);
   const blocks: ManagedImageBlock[] = [];
-  let resolvedLocalRoots: readonly string[] | undefined;
+  let resolvedLocalRoots: Promise<readonly string[]> | undefined;
   for (const [index, mediaUrl] of mediaUrls.entries()) {
     const fallbackAlt = `Generated image ${index + 1}`;
     const parsedDataUrl = parseImageDataUrl(mediaUrl, fallbackAlt, limits);
@@ -896,12 +896,15 @@ export async function createManagedOutgoingImageBlocks(params: {
           : await (async () => {
               const localMediaPath = resolveLocalMediaPath(mediaUrl);
               if (localMediaPath) {
-                if (params.localRoots !== "any") {
-                  resolvedLocalRoots ??= await resolveLocalMediaRoots(params.localRoots);
-                }
-                const localMediaOptions = resolvedLocalRoots
-                  ? { resolvedRoots: resolvedLocalRoots }
-                  : undefined;
+                const localMediaOptions =
+                  params.localRoots === "any"
+                    ? undefined
+                    : {
+                        resolveRoots: async () => {
+                          resolvedLocalRoots ??= await resolveLocalMediaRoots(params.localRoots);
+                          return resolvedLocalRoots;
+                        },
+                      };
                 await assertLocalMediaAllowed(localMediaPath, params.localRoots, localMediaOptions);
               }
               return await saveMediaSource(
