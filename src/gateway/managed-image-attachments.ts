@@ -868,7 +868,7 @@ export async function createManagedOutgoingImageBlocks(params: {
   const stateDir = params.stateDir ?? resolveStateDir();
   const limits = resolveManagedImageAttachmentLimits(params.limits);
   const blocks: ManagedImageBlock[] = [];
-  let resolvedLocalRoots: Promise<readonly string[]> | undefined;
+  let resolvedLocalRoots: readonly string[] | undefined;
   for (const [index, mediaUrl] of mediaUrls.entries()) {
     const fallbackAlt = `Generated image ${index + 1}`;
     const parsedDataUrl = parseImageDataUrl(mediaUrl, fallbackAlt, limits);
