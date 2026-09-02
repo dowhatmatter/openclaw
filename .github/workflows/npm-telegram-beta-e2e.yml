@@ -45,55 +45,6 @@ on:
         required: false
         default: false
         type: boolean
-  workflow_call:
-    inputs:
-      advisory:
-        description: Treat package Telegram failures as advisory for the caller
-        required: false
-        default: false
-        type: boolean
-      package_spec:
-        description: Published OpenClaw package spec to test when no artifact is supplied
-        required: true
-        type: string
-      package_artifact_name:
-        description: Optional package-under-test artifact from the current or specified workflow run
-        required: false
-        default: ""
-        type: string
-      package_artifact_run_id:
-        description: Optional run id containing package_artifact_name
-        required: false
-        default: ""
-        type: string
-      package_label:
-        description: Optional display label for an artifact-backed package candidate
-        required: false
-        default: ""
-        type: string
-      harness_ref:
-        description: Source ref for the private QA harness; defaults to the called workflow ref
-        required: false
-        default: ""
-        type: string
-      provider_mode:
-        description: QA provider mode
-        required: false
-        default: mock-openai
-        type: string
-      scenario:
-        description: Optional comma-separated Telegram scenario ids
-        required: false
-        default: ""
-        type: string
-    secrets:
-      OPENAI_API_KEY:
-        required: false
-      OPENCLAW_QA_CONVEX_SITE_URL:
-        required: false
-      OPENCLAW_QA_CONVEX_SECRET_CI:
-        required: false
-
 permissions:
   contents: read
 
