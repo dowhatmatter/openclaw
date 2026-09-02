@@ -1,8 +1,6 @@
 name: Install Smoke
 
 on:
-  schedule:
-    - cron: "17 3 * * *"
   workflow_dispatch:
     inputs:
       run_bun_global_install_smoke:
@@ -15,23 +13,6 @@ on:
         required: false
         default: latest
         type: string
-  workflow_call:
-    inputs:
-      ref:
-        description: Git ref to validate
-        required: false
-        type: string
-      run_bun_global_install_smoke:
-        description: Run the Bun global install image-provider smoke
-        required: false
-        default: true
-        type: boolean
-      update_baseline_version:
-        description: Baseline openclaw version or dist-tag for installer update smoke
-        required: false
-        default: latest
-        type: string
-
 permissions:
   contents: read
   packages: write
